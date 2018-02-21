@@ -189,6 +189,13 @@ function bp_registration_options_form_actions() {
 		bp_registration_handle_reset_messages();
 	}
 
+	if ( isset( $_POST['install_emails'] ) ) {
+
+		check_admin_referer( 'bp_reg_options_check' );
+
+		BP_Registration_Emails::instance()->install_bp_emails();
+	}
+
 	// Request submissions.
 	if ( isset( $_POST['moderate'] ) ) {
 
@@ -198,8 +205,6 @@ function bp_registration_options_form_actions() {
 
 		$checked_members = array();
 		$send            = false;
-		$subject         = '';
-		$default_message = '';
 
 		if ( isset( $_POST['bp_member_check'] ) ) {
 			$checked_members = $_POST['bp_member_check'];
@@ -209,16 +214,7 @@ function bp_registration_options_form_actions() {
 			$checked_members = array( $checked_members );
 		}
 
-		if ( 'deny' === $action ) {
-			$send            = true;
-			$subject         = __( 'Membership Denied', 'bp-registration-options' );
-			$default_message = get_option( 'bprwg_denied_message' );
-		}
-		if ( 'approve' === $action ) {
-			$send            = true;
-			$subject         = __( 'Membership Approved', 'bp-registration-options' );
-			$default_message = get_option( 'bprwg_approved_message' );
-		}
+		$send = (  'deny' === $action || 'approve' === $action );
 
 		foreach ( $checked_members as $user_id ) {
 
@@ -290,31 +286,7 @@ function bp_registration_options_form_actions() {
 
 			// Only send out message if one exists.
 			if ( $send ) {
-
-				$message = str_replace( '[username]', $user->data->user_login, $message );
-				$message = str_replace( '[user_email]', $user->data->user_email, $message );
-
-				$mailme = array(
-					'user_email'   => $user->data->user_email,
-					'user_subject' => $subject,
-					'user_message' => $message,
-				);
-
-				/**
-				 * Filters the email arguments before mailing.
-				 *
-				 * @since 4.2.0
-				 *
-				 * @param array  $emailme Array of email arguments for wp_mail.
-				 * @param object $user User object for user being moderated.
-				 */
-				$mailme_filtered = apply_filters( 'bpro_hook_before_email', $mailme, $user );
-
-				add_filter( 'wp_mail_content_type', 'bp_registration_options_set_content_type' );
-
-				wp_mail( $mailme_filtered['user_email'], $mailme_filtered['user_subject'], $mailme_filtered['user_message'] );
-
-				remove_filter( 'wp_mail_content_type', 'bp_registration_options_set_content_type' );
+				BP_Registration_Emails::instance()->send_moderation_email( $user, $action );
 			}
 		}
 
@@ -567,6 +539,7 @@ function bp_registration_options_settings() {
 						<textarea id="activate_message" name="activate_message"><?php echo stripslashes( $activate_message ); ?></textarea>
 					</td>
 				</tr>
+				<?php if ( ! BP_Registration_Emails::bp_emails_available() ) : ?>
 				<tr>
 					<td class="alignright">
 						<label for="approved_message"><?php esc_html_e( 'Account Approved Email:', 'bp-registration-options' ); ?></label>
@@ -599,6 +572,7 @@ function bp_registration_options_settings() {
 						<textarea id="user_pending_message" name="user_pending_message"><?php echo stripslashes( $user_pending_message );?></textarea>
 					</td>
 				</tr>
+				<?php endif; ?>
 				<tr>
 					<td></td>
 					<td class="alignright">
@@ -614,6 +588,15 @@ function bp_registration_options_settings() {
 						</table>
 					</td>
 				</tr>
+			<?php if ( BP_Registration_Emails::bp_emails_available() ) : ?>
+				<tr>
+					<td class=""><?php esc_html_e( 'Emails can be configured ', 'bp-registration-options' ); ?> <a href="<?php echo admin_url( 'edit.php?post_type=' . bp_get_email_post_type() ) ?>">here</a>
+					</td>
+					<td class="alignright">
+						<input type="submit" id="install_emails" name="install_emails" class="button button-secondary" value="<?php esc_attr_e( 'Install Emails', 'bp-registration-options' ); ?>" />
+					</td>
+				</tr>
+			<?php endif; ?>
 			</table>
 
 			<?php
