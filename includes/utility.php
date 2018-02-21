@@ -37,7 +37,6 @@ function bp_registration_is_private_network() {
 	return true;
 }
 
-
 /**
  * Queries for all existing approved members that still have an IP address saved as user meta.
  *
@@ -91,4 +90,19 @@ function bp_registration_delete_ip_addresses() {
 			delete_user_meta( $user_id, '_bprwg_ip_address' );
 		}
 	}
+}
+
+/**
+ * Returns true if this network is locked
+ *
+ * @since 4.4.0
+ */
+function bp_registration_is_locked_network() {
+	$locked_network = get_option( 'bprwg_locked_network' );
+
+	if ( empty( $locked_network ) || ! $locked_network ) {
+		return false;
+	}
+
+	return true;
 }
