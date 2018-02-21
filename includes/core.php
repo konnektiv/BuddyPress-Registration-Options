@@ -70,9 +70,6 @@ function bp_registration_options_bp_core_register_account( $user_id ) {
 		 */
 		$admins = apply_filters( 'bprwg_bp_notification_users', get_users( 'role=administrator' ) );
 
-		// Add HTML capabilities temporarily.
-		add_filter( 'wp_mail_content_type', 'bp_registration_options_set_content_type' );
-
 		// If their IP or email is blocked, don't proceed and exit silently.
 		//$blockedIPs    = get_option( 'bprwg_blocked_ips', array() );
 		//$blockedemails = get_option( 'bprwg_blocked_emails', array() );
