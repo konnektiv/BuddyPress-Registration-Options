@@ -166,6 +166,7 @@ function bp_registration_handle_general_settings( $args = array() ) {
  * @since  unknown
  */
 function bp_registration_options_form_actions() {
+	$bpr_emails = new BP_Registration_Emails();
 
 	// Settings save.
 	if ( isset( $_POST['save_general'] ) ) {
@@ -202,7 +203,7 @@ function bp_registration_options_form_actions() {
 
 		check_admin_referer( 'bp_reg_options_check' );
 
-		BP_Registration_Emails::instance()->install_bp_emails();
+		$bpr_emails->install_bp_emails();
 	}
 
 	// Request submissions.
@@ -295,7 +296,7 @@ function bp_registration_options_form_actions() {
 
 			// Only send out message if one exists.
 			if ( $send ) {
-				BP_Registration_Emails::instance()->send_moderation_email( $user, $action );
+				$bpr_emails->send_moderation_email( $user, $action );
 			}
 		}
 
@@ -450,6 +451,9 @@ function bp_registration_options_settings() {
 	$admin_pending_message = get_option( 'bprwg_admin_pending_message' );
 	$user_pending_message  = get_option( 'bprwg_user_pending_message' );
 
+	$bpr_emails = new BP_Registration_Emails();
+	$bp_emails_available = $bpr_emails->bp_emails_available();
+
 	if ( ! $activate_message ) {
 		$activate_message = __( 'Your membership account is awaiting approval by the site administrator. You will not be able to fully interact with the social aspects of this website until your account is approved. Once approved or denied you will receive an email notice.', 'bp-registration-options' );
 
@@ -556,7 +560,7 @@ function bp_registration_options_settings() {
 						<textarea id="activate_message" name="activate_message"><?php echo stripslashes( $activate_message ); ?></textarea>
 					</td>
 				</tr>
-				<?php if ( ! BP_Registration_Emails::bp_emails_available() ) : ?>
+				<?php if ( ! $bp_emails_available ) : ?>
 				<tr>
 					<td class="alignright">
 						<label for="approved_message"><?php esc_html_e( 'Account Approved Email:', 'bp-registration-options' ); ?></label>
@@ -605,7 +609,7 @@ function bp_registration_options_settings() {
 						</table>
 					</td>
 				</tr>
-			<?php if ( BP_Registration_Emails::bp_emails_available() ) : ?>
+			<?php if ( $bp_emails_available ) : ?>
 				<tr>
 					<td class=""><?php esc_html_e( 'Emails can be configured ', 'bp-registration-options' ); ?> <a href="<?php echo admin_url( 'edit.php?post_type=' . bp_get_email_post_type() ) ?>">here</a>
 					</td>
