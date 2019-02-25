@@ -102,13 +102,30 @@ function bp_registration_options_bp_core_register_account( $user_id ) {
 		 */
 		update_user_meta( $user_id, '_bprwg_ip_address', apply_filters( '_bprwg_ip_address', $_SERVER['REMOTE_ADDR'] ) );
 
+		/**
+		 * Filters if an admin email is send for the current user
+		 *
+		 * @since 4.3.4
+		 */
+		$send_admin_email = apply_filters( 'bprwg_bp_send_admin_email', true, $user );
+
 		// Admin email.
-		$bpr_emails->send_admin_email( $user );
+		if ( $send_admin_email ){
+			$bpr_emails->send_admin_email( $user );
+		}
 
 		bp_registration_options_delete_user_count_transient();
 
 		// Set admin notification for new member.
 		$enable_notifications = (bool) get_option( 'bprwg_enable_notifications' );
+
+		/**
+		 * Filters if notifications are set for the current user
+		 *
+		 * @since 4.3.4
+		 */
+		$enable_notifications = apply_filters( 'bprwg_enable_notifications', $enable_notifications, $user );
+
 		if ( bp_is_active( 'notifications' ) && $enable_notifications ) {
 			foreach ( $admins as $admin ) {
 				bp_notifications_add_notification( array(
