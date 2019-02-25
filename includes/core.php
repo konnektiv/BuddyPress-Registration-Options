@@ -65,9 +65,10 @@ function bp_registration_options_bp_core_register_account( $user_id ) {
 		 *
 		 * Used for BP Notifications.
 		 *
+		 * @param array $value Array of users to set notifications for, for new member signups.
+		 *
 		 * @since 4.3.4
 		 *
-		 * @param array $value Array of users to set notifications for, for new member signups.
 		 */
 		$admins = apply_filters( 'bprwg_bp_notification_users', get_users( 'role=administrator' ) );
 
@@ -82,19 +83,19 @@ function bp_registration_options_bp_core_register_account( $user_id ) {
 			 *
 			 * @since 4.2.0
 			 */
-			/*$message = apply_filters( 'bprwg_banned_user_admin_email', __( 'Someone with a banned IP address or email just tried to register with your site', 'bp-registration-options' ) );
+		/*$message = apply_filters( 'bprwg_banned_user_admin_email', __( 'Someone with a banned IP address or email just tried to register with your site', 'bp-registration-options' ) );
 
-			wp_mail( $admin_email, __( 'Banned member registration attempt', 'bp-registration-options' ), $message );
+		wp_mail( $admin_email, __( 'Banned member registration attempt', 'bp-registration-options' ), $message );
 
-			// Delete their account thus far.
-			if ( is_multisite() ) {
-				wpmu_delete_user( $user_id );
-			} else {
-				wp_delete_user( $user_id );
-			}
+		// Delete their account thus far.
+		if ( is_multisite() ) {
+			wpmu_delete_user( $user_id );
+		} else {
+			wp_delete_user( $user_id );
+		}
 
-			return;
-		}*/
+		return;
+	}*/
 
 		// Set them as in moderation.
 		bp_registration_set_moderation_status( $user_id );
@@ -102,20 +103,38 @@ function bp_registration_options_bp_core_register_account( $user_id ) {
 		/**
 		 * Filters the SERVER global reported remote address.
 		 *
+		 * @param string $value IP Address of the user being registered.
+		 *
 		 * @since 4.3.0
 		 *
-		 * @param string $value IP Address of the user being registered.
 		 */
 		update_user_meta( $user_id, '_bprwg_ip_address', apply_filters( '_bprwg_ip_address', $_SERVER['REMOTE_ADDR'] ) );
 
+		/**
+		 * Filters if an admin email is send for the current user
+		 *
+		 * @since 4.3.4
+		 */
+		$send_admin_email = apply_filters( 'bprwg_bp_send_admin_email', true, $user );
+
 		// Admin email.
-		$bpr_emails->send_admin_email( $user );
+		if ( $send_admin_email ) {
+			$bpr_emails->send_admin_email( $user );
+		}
 
 		bp_registration_options_delete_user_count_transient();
 
 		if ( function_exists( 'bp_is_active' ) ) {
 			// Set admin notification for new member.
 			$enable_notifications = (bool) get_option( 'bprwg_enable_notifications' );
+
+			/**
+			 * Filters if notifications are set for the current user
+			 *
+			 * @since 4.4.0
+			 */
+			$enable_notifications = apply_filters( 'bprwg_enable_notifications', $enable_notifications, $user );
+
 			if ( bp_is_active( 'notifications' ) && $enable_notifications ) {
 				foreach ( $admins as $admin ) {
 					bp_notifications_add_notification( array(
